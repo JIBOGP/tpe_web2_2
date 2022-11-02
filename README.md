@@ -8,20 +8,26 @@ Devuelve todos los productos
     .../api/products?atributo=valor   
 #### Busca las filas de la columna "atributo" cuyo valor contenga la subcadena "valor"
     .../api/products?atributo=%valor    //ignora si antes de "valor" hay algo
+#####
     .../api/products?atributo=%valor%   //ignora si antes y despues de "valor" hay algo
+#####
     .../api/products?atributo=valor%    //ignora si despues de "valor" hay algo
 #### Busca las filas de la columna "atributo" cuyo valor sea igual al de "valor" ignorando partes especificas
     .../api/products?atributo=_valor    //ignora la primera letra y ve si lo que sigue de esta es igual a "valor"
+#####
     .../api/products?atributo=__valor   //ignora las primeras 2 letras
+#####
     .../api/products?atributo=_valor_   //ignora la primera y ultima letra
+#####
     .../api/products?atributo=valor_    //ignora la ultima letra
+#####
     .../api/products?atributo=valor_a   //ignora la anteultima letra y termina en a
 
-### -Ordenar por atributo (ascendente por defecto)
+### -Ordenar por atributo (por defecto "id") 
     .../api/products?sortby=atributo        // "atributo" es cualquiera de los atributos de la tabla
-#### Ordenar de forma ascendente (NO FUNCIONA SI NO SE LE DECLARA EL sortby)
+#### Ordenar de forma ascendente (por defecto)
     .../api/products?sortby=atributo&order=asc
-#### Ordenar de forma descendente (NO FUNCIONA SI NO SE LE DECLARA EL sortby)
+#### Ordenar de forma descendente
     .../api/products?sortby=atributo&order=desc
 
 ## GET api/products/:ID
