@@ -10,19 +10,17 @@ class ProductModel
         $this->db = new PDO('mysql:host=localhost;' . 'dbname=tpe_web2;charset=utf8', 'root', '');
     }
 
-    public function getAll($atributes_filter,$atributes_value,$sortby,$order)
+    public function getAll($atributes, $atributes_filter, $sortby, $order, $page, $limit)
     {
         $sql = "SELECT * FROM lista_productos";
-        $atributes = $this->getAttributes(); //Devuelve los atributos de la tabla
 
         //Filtrar por cualquiera de los atributo de mi tabla
         $sql_filter = "";
         $filter_values = [];
         foreach ($atributes_filter as $key => $atribute) {
-            if (!empty($atributes_value[$atribute])) {
-                $filter_value = $atributes_value[$atribute];
-                $sql_filter .= " $atribute LIKE ? AND";
-                $filter_values[] = "$filter_value";
+            if (!empty($atribute)) {
+                $sql_filter .= " $key LIKE ? AND";
+                $filter_values[] = "$atribute";
             }
         }
         if (!empty($sql_filter)) {
@@ -34,12 +32,23 @@ class ProductModel
             if (array_search($sortby, $atributes) != false) {
                 $sql .= " ORDER BY $sortby"; //Agrega la orden de ordenado
             }
-        }else {$sql .= " ORDER BY id";} //Ordena por defecto id
+        } else {
+            $sql .= " ORDER BY id";
+        } //Ordena por defecto id
 
         if (!empty($order)) {
             $order = strtolower($order);
             if ($order == 'desc') $sql .= " DESC"; //Agrega la orden de ordenado descendente
             else if ($order == 'asc') $sql .= " ASC"; //Agrega la orden de ordenado ascendente
+        }
+
+        //Paginación
+        if (
+            !empty($page) && is_numeric($page) && $page > 0 &&
+            !empty($limit) && is_numeric($limit) && $limit > 0
+        ) {
+            $pos = $limit * ($page - 1);
+            $sql .= " LIMIT $pos, $limit";
         }
 
         $query = $this->db->prepare($sql);

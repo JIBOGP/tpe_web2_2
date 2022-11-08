@@ -42,6 +42,10 @@ Devuelve todos los productos
 ### Crea un nuevo producto
     .../api/products
 
+## POST api/products/:ID
+### Agrega un nuevo comentario al producto
+    .../api/products/456
+
 ## PUT api/products/:ID
 ### Edita el producto, sustituyendo la información enviada
     .../api/products/123
