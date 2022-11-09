@@ -46,10 +46,6 @@ Devuelve todos los productos
 ### Agrega un nuevo comentario al producto
     .../api/products/456
 
-## PUT api/products/:ID
-### Edita el producto, sustituyendo la información enviada
-    .../api/products/123
-
 ## DELETE api/products/:ID
 ### Elimina un producto por su id
     .../api/products/123
