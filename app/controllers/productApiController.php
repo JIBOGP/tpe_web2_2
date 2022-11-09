@@ -48,6 +48,10 @@ class ProductApiController
 
         $products = $this->productModel->getAll($atributes, $atributes_filter, $sortby, $order, $page, $limit);
         if ($products) {
+            foreach ($products as $key => $product) {
+                if (is_string($product->especificaciones))
+                    $product->especificaciones = unserialize($product->especificaciones);
+            }
             $this->view->response($products);
         } else {
             $this->view->response($products, 204);
@@ -62,6 +66,7 @@ class ProductApiController
         if ($product) {
             $comentarios = $this->commentModel->getAll($id);
             $product->comentarios = $comentarios;
+            $product->especificaciones = unserialize($product->especificaciones);
             $this->view->response($product);
         } else
             $this->view->response("El producto con el id=$id no existe", 404);
@@ -75,6 +80,7 @@ class ProductApiController
         $product = $this->productModel->get($id);
         if ($product) {
             $this->productModel->delete($id);
+            $product->especificaciones = unserialize($product->especificaciones);
             $this->view->response($product);
         } else
             $this->view->response("El producto con el id=$id no existe", 404);
@@ -89,15 +95,16 @@ class ProductApiController
             empty($product->categoria_fk) ||
             empty($product->nombre) ||
             empty($product->stock) ||
-            empty($product->precio) ||
-            (empty($product->especificaciones) && !is_array($product->especificaciones))
+            empty($product->precio)
         ) {
             $this->view->response("Complete los datos correctamente", 400);
         } else {
             if (!empty($product->imagen)) $image = htmlspecialchars($product->imagen);
             else $image = null;
-            $product->especificaciones = $this->sanitize_array($product->especificaciones);
-            $product->especificaciones = serialize($product->especificaciones);
+            if (!empty($product->especificaciones) && is_array($product->especificaciones)) {
+                $product->especificaciones = $this->sanitize_array($product->especificaciones);
+                $product->especificaciones = serialize($product->especificaciones);
+            } else $product->especificaciones = "";
             $id = $this->productModel->insert(
                 htmlspecialchars($product->categoria_fk),
                 htmlspecialchars($product->nombre),
