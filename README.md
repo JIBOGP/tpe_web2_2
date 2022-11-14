@@ -99,5 +99,5 @@
 
 ## PUT api/comments/:ID
 ### Edita la informacion de un comentario por su id
-    .../api/products/123
+    .../api/comments/123
     
