@@ -1,21 +1,21 @@
 <?php
 require_once './app/models/productModel.php';
-require_once './app/models/commentModel.php';
+require_once './app/helpers/helperFunction.php';
 require_once './app/views/api.view.php';
 
 class ProductApiController
 {
     private $productModel;
-    private $commentModel;
     private $view;
+    private $helperFunction;
 
     private $data;
 
     public function __construct()
     {
         $this->productModel = new ProductModel();
-        $this->commentModel = new CommentModel();
         $this->view = new ApiView();
+        $this->helperFunction = new HelperFunction();
 
         // lee el body del request
         $this->data = file_get_contents("php://input");
@@ -29,7 +29,7 @@ class ProductApiController
     //Obtener productos
     public function getProducts()
     {
-        $atributes = $this->productModel->getAttributes();
+        $atributes = $this->helperFunction->getAttributes("lista_productos");
         $atributes_filter = [];
         foreach ($atributes as $key => $atribute) {
             if (isset($_GET[$atribute])) {
@@ -64,8 +64,6 @@ class ProductApiController
         $id = $params[':ID'];
         $product = $this->productModel->get($id);
         if ($product) {
-            $comentarios = $this->commentModel->getAll($id);
-            $product->comentarios = $comentarios;
             $product->especificaciones = unserialize($product->especificaciones);
             $this->view->response($product);
         } else
@@ -86,11 +84,10 @@ class ProductApiController
             $this->view->response("El producto con el id=$id no existe", 404);
     }
 
-    //Insertar producto
+    //Agregar producto
     public function insertProduct()
     {
         $product = $this->getData();
-
         if (
             empty($product->categoria_fk) ||
             empty($product->nombre) ||
@@ -102,7 +99,7 @@ class ProductApiController
             if (!empty($product->imagen)) $image = htmlspecialchars($product->imagen);
             else $image = null;
             if (!empty($product->especificaciones) && is_array($product->especificaciones)) {
-                $product->especificaciones = $this->sanitize_array($product->especificaciones);
+                $product->especificaciones = $this->helperFunction->sanitize_array($product->especificaciones);
                 $product->especificaciones = serialize($product->especificaciones);
             } else $product->especificaciones = "";
             $id = $this->productModel->insert(
@@ -119,31 +116,37 @@ class ProductApiController
         }
     }
 
-    public function sanitize_array($array)
-    {
-        for ($i = 0; $i < count($array); $i++) {
-            $newarray[$i] = htmlspecialchars($array[$i]);
-        }
-        return $newarray;
-    }
-
-    //Comentarios
-
-    //Insertar comentarios
-    public function insertComent($params = null)
+    //Editar producto
+    public function editProduct($params = null)
     {
         $id = $params[':ID'];
-        $comment = $this->getData();
-        if (
-            empty($comment->comentario)
-        ) {
-            $this->view->response("Complete los datos correctamente", 400);
-        } else {
-            $id = $this->commentModel->insert($id, $comment->comentario);
 
-            $comment_item = $this->commentModel->get($id);
-            if ($comment_item) $this->view->response($comment_item, 201);
-            else $this->view->response("producto no disponible", 400);
-        }
+        $productUpdate = $this->getData();
+
+        $product = $this->productModel->get($id);
+
+        if ($product) {
+            $atributos = $this->helperFunction->getAttributes(TABLAPROD);
+
+            $editproduct = [];
+
+            for ($i = 3; $i < count($atributos); $i++) {
+                $atribute = $atributos[$i];
+                if (!empty($productUpdate->$atribute)) {
+                    $editproduct[$atribute] = $productUpdate->$atribute;
+                }
+            }
+
+            if (count($editproduct) > 0) {
+                $this->productModel->edit($id, $editproduct);
+                $product = $this->productModel->get($id);
+                $this->view->response($product);
+            } elseif (count(get_object_vars($productUpdate))>0) {
+                $this->view->response("Los atributos no coinciden con ningun atributo de la tabla", 406);
+            }else {
+                $this->view->response("No se han puesto atributos para modificar", 406);
+            }
+        } else
+            $this->view->response("El producto con el id=$id no existe", 404);
     }
 }

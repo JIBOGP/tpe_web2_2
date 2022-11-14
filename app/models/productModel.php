@@ -1,86 +1,26 @@
 <?php
-
+require_once './app/helpers/helperFunction.php';
+define("TABLAPROD", "lista_productos");
 class ProductModel
 {
-
     private $db;
+    public $helperFunction;
 
     public function __construct()
     {
         $this->db = new PDO('mysql:host=localhost;' . 'dbname=tpe_web2;charset=utf8', 'root', '');
+        $this->helperFunction = new HelperFunction();
     }
 
     public function getAll($atributes, $atributes_filter, $sortby, $order, $page, $limit)
     {
-        $sql = "SELECT * FROM lista_productos";
-
-        //Filtrar por cualquiera de los atributo de mi tabla
-        $sql_filter = "";
-        $filter_values = [];
-        foreach ($atributes_filter as $key => $atribute) {
-            if (!empty($atribute)) {
-                $sql_filter .= " $key LIKE ? AND";
-                $filter_values[] = "$atribute";
-            }
-        }
-        if (!empty($sql_filter)) {
-            $sql .= " WHERE" . rtrim($sql_filter, " AND");
-        }
-        //Ordenar por cualquiera de los atributo de mi tabla
-        if (!empty($sortby)) {
-            //$filterby = $_GET['filter'];
-            if (array_search($sortby, $atributes) != false) {
-                $sql .= " ORDER BY $sortby"; //Agrega la orden de ordenado
-            }
-        } else {
-            $sql .= " ORDER BY id";
-        } //Ordena por defecto id
-
-        if (!empty($order)) {
-            $order = strtolower($order);
-            if ($order == 'desc') $sql .= " DESC"; //Agrega la orden de ordenado descendente
-            else if ($order == 'asc') $sql .= " ASC"; //Agrega la orden de ordenado ascendente
-        }
-
-        //Paginación
-        if (
-            !empty($page) && is_numeric($page) && $page > 0 &&
-            !empty($limit) && is_numeric($limit) && $limit > 0
-        ) {
-            $pos = $limit * ($page - 1);
-            $sql .= " LIMIT $pos, $limit";
-        }
-
-        $query = $this->db->prepare($sql);
-        if (!empty($filter_values)) {
-            $query->execute($filter_values);
-        } else {
-            $query->execute();
-        }
-
-
-        $products = $query->fetchAll(PDO::FETCH_OBJ);
-
-        return $products;
-    }
-
-    public function getAttributes() //Devuelve los atributos de la tabla
-    {
-        $query = $this->db->prepare("SHOW COLUMNS FROM `lista_productos`");
-        $query->execute();
-
-        $attributes = $query->fetchAll(PDO::FETCH_OBJ);
-        $arrayAttributes[0] = "";
-        foreach ($attributes as $key => $attribute) {
-            $arrayAttributes[$key + 1] = strtolower($attribute->Field);
-        }
-        return $arrayAttributes;
+        return $this->helperFunction->getAll($atributes, $atributes_filter, $sortby, $order, $page, $limit, TABLAPROD);
     }
 
     //Muestra un producto dado su id
     public function get($id)
     {
-        $query = $this->db->prepare("SELECT * FROM lista_productos WHERE id = ?");
+        $query = $this->db->prepare("SELECT * FROM " . TABLAPROD . " WHERE id = ?");
         $query->execute([$id]);
         $product = $query->fetch(PDO::FETCH_OBJ);
 
@@ -91,7 +31,7 @@ class ProductModel
     public function insert($categoria_fk, $nombre, $imagen, $stock, $precio, $especificaciones)
     {
         try {
-            $query = $this->db->prepare("INSERT INTO lista_productos (categoria_fk, nombre, imagen, stock, precio, especificaciones) VALUES (?, ?, ?, ?, ?, ?)");
+            $query = $this->db->prepare("INSERT INTO " . TABLAPROD . " (categoria_fk, nombre, imagen, stock, precio, especificaciones) VALUES (?, ?, ?, ?, ?, ?)");
             $query->execute([$categoria_fk, $nombre, $imagen, $stock, $precio, $especificaciones]);
         } catch (Exception $e) {
         }
@@ -102,7 +42,27 @@ class ProductModel
     //Elimina un producto dado su id
     public function delete($id)
     {
-        $query = $this->db->prepare('DELETE FROM lista_productos WHERE id = ?');
+        $query = $this->db->prepare("DELETE FROM " . TABLAPROD . " WHERE id = ?");
         $query->execute([$id]);
+    }
+
+    public function edit($id, $atributos)
+    {
+        $sql = "UPDATE " . TABLAPROD . " SET";
+        foreach ($atributos as $key => $atribute) {
+            $sql .= " $key = :$key,";
+            if (is_array($atribute)) {
+                $atribute = $this->helperFunction->sanitize_array($atribute);
+                $atributos[$key] = serialize($atribute);
+            }else{
+                $atributos[$key] = htmlspecialchars($atribute);
+            }
+        }
+        $sql = rtrim($sql, ",");
+
+        $atributos["id"] = $id;
+        $sql .= " WHERE id = :id";
+        $query = $this->db->prepare($sql);
+        $query->execute($atributos);
     }
 }

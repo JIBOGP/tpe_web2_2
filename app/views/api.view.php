@@ -20,6 +20,7 @@ class ApiView
       204 => "No Content",
       400 => "Bad request",
       404 => "Not found",
+      406 => "Not Acceptable",
       500 => "Internal Server Error"
     );
     return (isset($status[$code])) ? $status[$code] : $status[500];
