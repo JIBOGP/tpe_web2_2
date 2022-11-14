@@ -142,9 +142,9 @@ class ProductApiController
                 $product = $this->productModel->get($id);
                 $this->view->response($product);
             } elseif (count(get_object_vars($productUpdate))>0) {
-                $this->view->response("Los atributos no coinciden con ningun atributo de la tabla", 406);
+                $this->view->response("Los atributos no coinciden con ningun atributo de la tabla", 400);
             }else {
-                $this->view->response("No se han puesto atributos para modificar", 406);
+                $this->view->response("No se han puesto atributos para modificar", 400);
             }
         } else
             $this->view->response("El producto con el id=$id no existe", 404);
